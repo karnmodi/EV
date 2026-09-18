@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unit Conversion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #1c2430;
+      --muted: #5a6573;
+      --line: rgba(28, 36, 48, 0.12);
+      --panel: rgba(255, 255, 255, 0.72);
+      --panel-solid: #f3f6f4;
+      --accent: #0f766e;
+      --accent-soft: #ccfbf1;
+      --accent-ink: #115e59;
+      --warn: #9f1239;
+      --warn-soft: #ffe4e6;
+      --result: #0b3d36;
+      --display: "Fraunces", Georgia, serif;
+      --body: "Outfit", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: var(--body);
+      background:
+        radial-gradient(1200px 600px at 8% 12%, #d8efe8 0%, transparent 55%),
+        radial-gradient(900px 500px at 92% 88%, #e8eef5 0%, transparent 50%),
+        linear-gradient(135deg, #eef3f0 0%, #e4ebe8 45%, #dfe7ef 100%);
+    }
+
+    .shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    }
+
+    .workspace,
+    .outcome {
+      padding: clamp(1.5rem, 4vw, 3.25rem);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .workspace {
+      border-right: 1px solid var(--line);
+      gap: clamp(1.5rem, 3vw, 2.5rem);
+    }
+
+    .brand {
+      max-width: 34rem;
+      animation: rise 0.55s ease both;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-family: var(--display);
+      font-size: clamp(2.4rem, 4.5vw, 3.6rem);
+      font-weight: 650;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+    }
+
+    .brand p {
+      margin: 0.7rem 0 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.45;
+      max-width: 28rem;
+    }
+
+    #convert-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+      max-width: 40rem;
+      animation: rise 0.55s ease 0.08s both;
+    }
+
+    .cats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .cats button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 500;
+      padding: 0.55rem 0.95rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+    }
+
+    .cats button:hover {
+      color: var(--ink);
+      border-color: rgba(15, 118, 110, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .cats button[aria-pressed="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0.85rem;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 0.4rem;
+    }
+
+    .field span {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .field select,
+    .field input {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(8px);
+      color: var(--ink);
+      font: inherit;
+      font-size: 1.05rem;
+      padding: 0.85rem 0.95rem;
+      border-radius: 14px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .field select:focus,
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+    }
+
+    .value-field input {
+      font-family: var(--display);
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      padding: 1rem 1.1rem;
+    }
+
+    .swap {
+      width: 2.75rem;
+      height: 2.75rem;
+      margin-bottom: 0.15rem;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: var(--panel);
+      color: var(--accent-ink);
+      font-size: 1.15rem;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.25s ease;
+    }
+
+    .swap:hover {
+      background: var(--accent-soft);
+      transform: rotate(180deg);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    #convert-btn {
+      appearance: none;
+      border: none;
+      background: var(--ink);
+      color: #fff;
+      font: inherit;
+      font-weight: 600;
+      padding: 0.85rem 1.35rem;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.2s ease, background 0.2s ease;
+    }
+
+    #convert-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      background: #101821;
+    }
+
+    #convert-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .outcome {
+      background:
+        linear-gradient(160deg, rgba(15, 118, 110, 0.08), transparent 40%),
+        var(--panel-solid);
+      animation: rise 0.55s ease 0.16s both;
+    }
+
+    .outcome-inner {
+      max-width: 34rem;
+      margin-inline: auto;
+      width: 100%;
+    }
+
+    .outcome-label {
+      margin: 0 0 1rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    #result,
+    #error {
+      display: none;
+      min-height: 12rem;
+    }
+
+    #result.visible,
+    #error.visible {
+      display: block;
+      animation: fade-in 0.35s ease both;
+    }
+
+    #result .equation {
+      display: grid;
+      gap: 1rem;
+    }
+
+    #result .amount {
+      font-family: var(--display);
+      font-size: clamp(2.8rem, 6vw, 4.4rem);
+      font-weight: 650;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--result);
+      word-break: break-word;
+    }
+
+    #result .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    #result .meta strong {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    #error {
+      padding: 1.25rem 1.35rem;
+      border-radius: 16px;
+      background: var(--warn-soft);
+      color: var(--warn);
+      white-space: pre-wrap;
+      line-height: 1.5;
+      font-size: 1rem;
+    }
+
+    .placeholder {
+      color: var(--muted);
+      font-size: 1.15rem;
+      line-height: 1.5;
+      max-width: 22rem;
+    }
+
+    .placeholder.hidden { display: none; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 860px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .workspace,
+      .outcome {
+        min-height: auto;
+      }
+
+      .workspace {
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 2rem;
+      }
+
+      .outcome {
+        padding-top: 2rem;
+        min-height: 40vh;
+      }
+
+      .flow {
+        grid-template-columns: 1fr;
+      }
+
+      .swap {
+        justify-self: center;
+        transform: rotate(90deg);
+      }
+
+      .swap:hover {
+        transform: rotate(270deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="workspace" aria-label="Conversion controls">
+      <header class="brand">
+        <h1>Unit Conversion</h1>
+        <p>Pick a category, enter a value, and choose units. The result updates as you go.</p>
+      </header>
+
+      <div id="convert-form">
+        <div class="cats" role="group" aria-label="Category">
+          <button type="button" data-category="length" aria-pressed="true">Length</button>
+          <button type="button" data-category="mass" aria-pressed="false">Mass</button>
+          <button type="button" data-category="temperature" aria-pressed="false">Temperature</button>
+          <button type="button" data-category="volume" aria-pressed="false">Volume</button>
+        </div>
+        <select id="category" hidden>
+          <option value="length" selected>length</option>
+          <option value="mass">mass</option>
+          <option value="temperature">temperature</option>
+          <option value="volume">volume</option>
+        </select>
+
+        <label class="field value-field">
+          <span>Value</span>
+          <input id="value" name="value" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="1">
+        </label>
+
+        <div class="flow">
+          <label class="field">
+            <span>From</span>
+            <select id="from" name="from"></select>
+          </label>
+          <button class="swap" id="swap-btn" type="button" title="Swap units" aria-label="Swap units">⇄</button>
+          <label class="field">
+            <span>To</span>
+            <select id="to" name="to"></select>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="convert-btn" type="button">Convert now</button>
+          <span class="hint">Also converts as you type</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="outcome" aria-label="Conversion result">
+      <div class="outcome-inner">
+        <p class="outcome-label">Result</p>
+        <p class="placeholder" id="placeholder">Your converted value will appear here.</p>
+        <div id="result" role="status" aria-live="polite"></div>
+        <div id="error" role="alert" aria-live="assertive"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const categoryEl = document.getElementById("category");
+    const fromEl = document.getElementById("from");
+    const toEl = document.getElementById("to");
+    const valueEl = document.getElementById("value");
+    const convertBtn = document.getElementById("convert-btn");
+    const swapBtn = document.getElementById("swap-btn");
+    const resultEl = document.getElementById("result");
+    const errorEl = document.getElementById("error");
+    const placeholderEl = document.getElementById("placeholder");
+    const catButtons = [...document.querySelectorAll(".cats button")];
+
+    let unitsByCategory = {
+      length: [],
+      mass: [],
+      temperature: [],
+      volume: []
+    };
+    let debounceTimer = null;
+    let ready = false;
+
+    function clearPanels() {
+      resultEl.classList.remove("visible");
+      errorEl.classList.remove("visible");
+      resultEl.replaceChildren();
+      errorEl.textContent = "";
+      placeholderEl.classList.remove("hidden");
+    }
+
+    function showResult(body) {
+      errorEl.classList.remove("visible");
+      errorEl.textContent = "";
+      placeholderEl.classList.add("hidden");
+      resultEl.replaceChildren();
+
+      const amount = document.createElement("div");
+      amount.className = "amount";
+      amount.textContent = String(body.value);
+
+      const unit = document.createElement("div");
+      unit.className = "meta";
+      unit.innerHTML =
+        "<strong>" + escapeHtml(body.to.code) + "</strong>" +
+        "<span>from " + escapeHtml(String(body.input)) + " " + escapeHtml(body.from.code) + "</span>";
+
+      const wrap = document.createElement("div");
+      wrap.className = "equation";
+      wrap.append(amount, unit);
+      resultEl.append(wrap);
+      resultEl.classList.add("visible");
+    }
+
+    function showError(text) {
+      resultEl.classList.remove("visible");
+      resultEl.replaceChildren();
+      placeholderEl.classList.add("hidden");
+      errorEl.textContent = text;
+      errorEl.classList.add("visible");
+    }
+
+    function escapeHtml(value) {
+      return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function formatProblem(problem) {
+      const parts = [];
+      if (problem.title) parts.push(problem.title);
+      if (problem.detail) parts.push(problem.detail);
+      if (problem.code) parts.push("code: " + problem.code);
+      return parts.length ? parts.join("\n") : "Request failed.";
+    }
+
+    function setCategory(category) {
+      categoryEl.value = category;
+      for (const button of catButtons) {
+        button.setAttribute("aria-pressed", button.dataset.category === category ? "true" : "false");
+      }
+      fillUnitSelects();
+      scheduleConvert();
+    }
+
+    function fillUnitSelects() {
+      const category = categoryEl.value;
+      const units = unitsByCategory[category] || [];
+      const previousFrom = fromEl.value;
+      const previousTo = toEl.value;
+
+      fromEl.replaceChildren();
+      toEl.replaceChildren();
+
+      for (const unit of units) {
+        const label = unit.name + " (" + unit.code + ")";
+        const fromOpt = document.createElement("option");
+        fromOpt.value = unit.code;
+        fromOpt.textContent = label;
+        fromEl.appendChild(fromOpt);
+
+        const toOpt = document.createElement("option");
+        toOpt.value = unit.code;
+        toOpt.textContent = label;
+        toEl.appendChild(toOpt);
+      }
+
+      if (units.some(u => u.code === previousFrom)) {
+        fromEl.value = previousFrom;
+      }
+      if (units.some(u => u.code === previousTo)) {
+        toEl.value = previousTo;
+      } else if (units.length > 1) {
+        toEl.selectedIndex = Math.min(1, units.length - 1);
+      }
+    }
+
+    async function convert() {
+      if (!ready) return;
+
+      const raw = valueEl.value.trim();
+      if (!raw) {
+        clearPanels();
+        return;
+      }
+
+      convertBtn.disabled = true;
+      const params = new URLSearchParams({
+        from: fromEl.value,
+        to: toEl.value,
+        value: raw
+      });
+
+      try {
+        const response = await fetch("/api/v1/convert?" + params.toString());
+        const body = await response.json();
+        if (!response.ok) {
+          showError(formatProblem(body));
+          return;
+        }
+        showResult(body);
+      } catch (err) {
+        showError(err instanceof Error ? err.message : "Request failed.");
+      } finally {
+        convertBtn.disabled = false;
+      }
+    }
+
+    function scheduleConvert() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(convert, 220);
+    }
+
+    async function loadUnits() {
+      convertBtn.disabled = true;
+      clearPanels();
+
+      const response = await fetch("/api/v1/units");
+      if (!response.ok) {
+        let message = "Could not load units (" + response.status + ").";
+        try {
+          const problem = await response.json();
+          message = formatProblem(problem);
+        } catch (_) { /* keep status message */ }
+        showError(message);
+        return;
+      }
+
+      const units = await response.json();
+      unitsByCategory = { length: [], mass: [], temperature: [], volume: [] };
+      for (const unit of units) {
+        if (unitsByCategory[unit.category]) {
+          unitsByCategory[unit.category].push(unit);
+        }
+      }
+
+      fillUnitSelects();
+      ready = true;
+      convertBtn.disabled = false;
+      scheduleConvert();
+    }
+
+    for (const button of catButtons) {
+      button.addEventListener("click", () => setCategory(button.dataset.category));
+    }
+
+    fromEl.addEventListener("change", scheduleConvert);
+    toEl.addEventListener("change", scheduleConvert);
+    valueEl.addEventListener("input", scheduleConvert);
+    convertBtn.addEventListener("click", convert);
+
+    swapBtn.addEventListener("click", () => {
+      const a = fromEl.value;
+      fromEl.value = toEl.value;
+      toEl.value = a;
+      scheduleConvert();
+    });
+
+    loadUnits().catch((err) => {
+      showError(err instanceof Error ? err.message : "Could not load units.");
+      convertBtn.disabled = true;
+    });
+  </script>
+</body>
+</html>

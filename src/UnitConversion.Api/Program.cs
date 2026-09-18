@@ -75,6 +75,8 @@ var app = builder.Build();
 _ = app.Services.GetRequiredService<IUnitCatalog>();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.MapOpenApi();
 app.MapHealthChecks("/health");
 app.MapConvertEndpoints();

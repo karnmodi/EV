@@ -41,7 +41,7 @@ dotnet test --configuration Release --nologo
 dotnet run --project src/UnitConversion.Api --launch-profile http
 ```
 
-The `http` profile listens on **[http://localhost:5080](http://localhost:5080)** on both platforms. Leave that terminal open while you try the URLs below or Postman.
+The `http` profile listens on **[http://localhost:5080](http://localhost:5080)** on both platforms. That root URL opens a small same-origin converter page (category / from / to / value). Leave the terminal open while you try the page, the example URLs below, or Postman.
 
 ## Postman
 
@@ -161,7 +161,7 @@ Layout:
 
 ```text
 src/UnitConversion.Domain/   conversion + catalog
-src/UnitConversion.Api/      Minimal APIs
+src/UnitConversion.Api/      Minimal APIs + wwwroot converter page
 tests/…                      xUnit (domain + WebApplicationFactory)
 postman/                     Postman collection + local environment
 ```
@@ -189,6 +189,10 @@ The map is the same story as the folders above: `ConversionService` and `InMemor
 **No extra rounding on output.** Results retain native `decimal` precision; clients may round for display. Intermediate overflow is reported as 400 even if a different algebraic form might have succeeded. I am not rewriting expressions per unit.
 
 **No auth, rate limits, or pagination.** Nothing here is user-specific or large. Those belong when there is a real client and a real threat model.
+
+**Same-origin static page, not a separate frontend.** `/` is one HTML file under `wwwroot` that calls the existing convert and units routes. There is no SPA build, CORS, or extra UI project.
+
+![Unit Conversion page](docs/unit-conversion-page.png)
 
 ## Tests
 
