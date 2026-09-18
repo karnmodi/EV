@@ -166,6 +166,14 @@ tests/…                      xUnit (domain + WebApplicationFactory)
 postman/                     Postman collection + local environment
 ```
 
+## Diagram
+
+Two projects, one direction of dependency. Domain has no ASP.NET types; the API project is the only HTTP surface. Every request is validated, then converted in-process — no extra hop.
+
+![Unit Conversion API codebase map](docs/unit-conversion-api-codebase-map.png)
+
+The map is the same story as the folders above: `ConversionService` and `InMemoryUnitCatalog` live in Domain; `ConvertEndpoints` calls them after `QueryValidation`. Domain tests hit the catalog and conversion math directly. API tests host the app in memory and assert status codes and Problem Details.
+
 
 
 ## Why these choices
